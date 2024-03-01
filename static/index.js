@@ -2,6 +2,12 @@
 
 $(document).ready(function() {
     let _sectionData = $("#sectionData")
+    let _homeButton = $("#homeButton")
+    let _settingsButton = $("#settingsButton")
+    let _commandsButton = $("#commandsButton")
+
+    let _home = $("#home").show()
+    let _commands = $("#commands").hide()
 
     let serverSocket = io.connect("http://localhost:3000")
 
@@ -10,6 +16,33 @@ $(document).ready(function() {
 
     GetData()
 
+    _homeButton.on("click", function() {
+        _home.show()
+        _commands.hide()
+
+        _homeButton.addClass("active")
+        _commandsButton.removeClass("active")
+        _settingsButton.removeClass("active")
+    })
+
+    _commandsButton.on("click", function() {
+        _home.hide()
+        _commands.show()
+
+        _homeButton.removeClass("active")
+        _commandsButton.addClass("active")
+        _settingsButton.removeClass("active")
+    })
+
+    _settingsButton.on("click", function() {
+        _home.hide()
+        _commands.hide()
+
+        _homeButton.removeClass("active")
+        _commandsButton.removeClass("active")
+        _settingsButton.addClass("active")
+    })
+    
     function GetData() {
         let rq = inviaRichiesta("GET", "/api/sunshutter")
 
@@ -51,7 +84,7 @@ $(document).ready(function() {
                 }
 
                 if(title != undefined && text != undefined) {
-                    let divCard = $("<div>").addClass("card").appendTo(_sectionData)
+                    let divCard = $("<div>").addClass("card item").appendTo(_sectionData)
                     let divCardBody = $("<div>").addClass("card-body").appendTo(divCard)
                     $("<h5>").addClass("card-title").text(title).appendTo(divCardBody).appendTo(divCardBody)
                     $("<p>").addClass("card-text").text(text).appendTo(divCardBody)
