@@ -9,6 +9,7 @@ $(document).ready(function () {
     let _commands = $("#commands").show()
 
     let _switchOpen = $("#toggler-1").prop("disabled", true)
+    let _orientamentoInput = $("#orientamentoInput")
 
     let serverSocket = io.connect("http://localhost:3000")
 
@@ -86,6 +87,7 @@ $(document).ready(function () {
                     case "Orientamento":
                         title = "Orientamento"
                         text = `${response["data"][0][key]["$numberDecimal"]} °`
+                        _orientamentoInput.val(response["data"][0][key]["$numberDecimal"])
                         break
 
                     default:
