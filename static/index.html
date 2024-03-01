@@ -1,0 +1,66 @@
+
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Device Management</title>
+    <!-- Link al CSS di Bootstrap -->
+    <link rel="icon" href="img/icoVallauri.png" type="image/png" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <link rel="stylesheet" href="./index.css">
+    
+    <script src="./jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="./axios@1.1.2.min.js"></script>
+    <script src="./libreria.js"></script>
+    <script src="./index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.1/socket.io.js"></script>
+  </head>
+
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <a class="navbar-brand" href="#">IoT Device Management</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item active">
+            <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Settings</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Sensors</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Commands</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <main class="container my-4" style="text-align: center;">
+      <img src="https://pbs.twimg.com/media/C1h3NAzXcAAONhj?format=jpg&name=large" alt="" style="width: 100%;">
+      <div class="row">
+        <section class="col-md-6" style="margin: 0 auto; text-align: center;">
+          <h2>SunShutter</h2>
+          <img src="" alt="">
+        </section>
+      </div>
+
+        <section class="col-md-12" id="sectionData">
+        </section>
+    </main>
+
+    <footer class="bg-dark text-white py-3 fixed-bottom">
+      <div class="container text-center">
+        <p>&copy; 2024 IoT Solutions</p>
+      </div>
+    </footer>
+  </body>
+</html>
