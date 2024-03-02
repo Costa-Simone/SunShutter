@@ -20,21 +20,6 @@ const server = _http.createServer(app)
 const PORT:number = parseInt(process.env.PORT) ;
 let paginaErrore;
 
-const io = new Server(server)
-
-io.on('connection', (socket) => {
-    console.log('A client connected');
-  
-    socket.on('chat message', (message) => {
-      console.log('Received message:', message);
-      io.emit('chat message', message); // Broadcast message to all connected clients
-    });
-  
-    socket.on('disconnect', () => {
-      console.log('Client disconnected');
-    });
-});
-
 server.listen(PORT, () => {
     init()
 
@@ -50,6 +35,25 @@ function init() {
         }
     })
 }
+
+//////////////////////////////////////////////////////////////////
+// Websocket connection
+//////////////////////////////////////////////////////////////////
+
+const io = new Server(server)
+
+io.on('connection', (socket) => {
+    console.log('A client connected');
+  
+    socket.on('chat message', (message) => {
+      console.log('Received message:', message);
+      io.emit('chat message', message); // Broadcast message to all connected clients
+    });
+  
+    socket.on('disconnect', () => {
+      console.log('Client disconnected');
+    });
+});
 
 //////////////////////////////////////////////////////////////////
 // Route Middelware
@@ -80,51 +84,6 @@ app.use("/", (req, res, next) => {
 
     next()
 })
-
-// 5. Controllo accessi tramite CORS
-// const whitelist = [
-//     "http://https://costasimone-crudserver.onrender.com",
-//     "https://https://costasimone-crudserver.onrender.com",
-//     "http://localhost:3000",
-//     "http://localhost:3001",
-//     "http://localhost:4200", // server angular,
-//     "http://localhost:8100" // server ionic
-// ];
-
-// const corsOptions = {
-//     origin: function(origin, callback) {
-//         return callback(null, true);
-//     },
-//     credentials: true
-// };
-
-// procedura che utilizza whitelist
-// const corsOptions = {
-//     origin: function(origin, callback) {
-//         if (!origin) // browser direct call
-//             return callback(null, true);
-//         if (whitelist.indexOf(origin) === -1) {
-//             var msg =
-//                 `The CORS policy for this site does not
-//                  allow access from the specified Origin.`
-//             return callback(new Error(msg), false);
-//     } else
-//     return callback(null, true);
-//     },
-//     credentials: true
-// };
-
-// app.use("/", _cors(corsOptions));
-
-//////////////////////////////////////////////////////////////////
-// Websocket connection
-//////////////////////////////////////////////////////////////////
-
-// io.on("connection", clientSocket => {
-//     console.log(`User ${clientSocket.id} connected`)
-// })
-
-
 
 //////////////////////////////////////////////////////////////////
 // Route finali risposta client
