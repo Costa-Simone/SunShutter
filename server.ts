@@ -3,10 +3,6 @@ import _url from "url";
 import _fs from "fs";
 import _express from "express"
 import _dotenv from "dotenv"
-// import _cors from "cors"
-import { Server, Socket } from 'socket.io'
-
-const WebSocket = require("ws")
 
 // lettura porte e variabili di ambiente
 _dotenv.config({path: "./.env"})
@@ -55,6 +51,22 @@ io.on("connection", socket => {
         io.emit("message", args)
         console.log(args)
     })
+
+    GetData()
+
+    async function GetData() {
+        const client = new MongoClient(connectionString);
+        await client.connect();
+        let collection = client.db(DBNAME).collection("sunshutter");
+        let rq = collection.find().toArray()
+    
+        let aus = await rq
+        console.log(JSON.stringify(aus[0]))
+    
+        rq.finally(() => client.close());
+    
+        io.emit("sunshutter", JSON.stringify(aus[0]))
+    }
 })
 
 //////////////////////////////////////////////////////////////////

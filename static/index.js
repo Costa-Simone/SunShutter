@@ -13,23 +13,22 @@ $(document).ready(function () {
     let _orientamentoInput = $("#orientamentoInput")
 
     try {
-        let socket = io("sunshutter.onrender.com", {transports: ["websocket"]})
+        let socket = io("wss://sunshutter.onrender.com/", {transports: ["websocket"]})
 
         socket.on("message", msg => {
             console.log(msg)
         })
+        socket.on("sunshutter", data => {
+            Showdata(data)
+        })
         socket.emit("messaged", "ciao")
+
     } catch (error) {
         console.log(error)
     }
 
     let isOpen = false
     let sunshutterId = null
-
-    serverSocket.on('connect', function () { console.log("connessione ok") })
-    serverSocket.on("chat message", data => { console.log(data) })
-
-    GetData()
 
     _saveButton.on("click", function () {
         let orientamento = parseFloat(_orientamentoInput.val())
@@ -72,61 +71,58 @@ $(document).ready(function () {
         _settingsButton.addClass("active")
     })
 
-    function GetData() {
-        let rq = inviaRichiesta("GET", "/api/sunshutter")
+    function Showdata(data) {
+        data = JSON.parse(data)
+        console.log(data)
 
-        rq.catch(errore)
-        rq.then(response => {
-            console.log(response["data"][0])
-            for (let key in response["data"][0]) {
-                let title
-                let text
+        for (let key in data) {
+            let title
+            let text
 
-                if (key == "_id") {
-                    sunshutterId = response["data"][0][key]
-                }
-
-                switch (key) {
-                    case "Apertura":
-                        title = "Apertura"
-
-                        if (response["data"][0][key] == false) {
-                            text = "Chiuso"
-                            isOpen = false
-                        } else {
-                            text = "Aperto"
-                            _switchOpen.prop("disabled", false).trigger("click")
-                            isOpen = true
-                        }
-                        break
-
-                    case "Consumo":
-                        title = "Consumo"
-                        text = `${response["data"][0][key]} W`
-                        break
-
-                    case "Produzione":
-                        title = "Produzione"
-                        text = `${response["data"][0][key]} W`
-                        break
-
-                    case "Orientamento":
-                        title = "Orientamento"
-                        text = `${response["data"][0][key]} °`
-                        _orientamentoInput.val(response["data"][0][key])
-                        break
-
-                    default:
-                        break;
-                }
-
-                if (title != undefined && text != undefined) {
-                    let divCard = $("<div>").addClass("card item").appendTo(_sectionData)
-                    let divCardBody = $("<div>").addClass("card-body").appendTo(divCard)
-                    $("<h5>").addClass("card-title").text(title).appendTo(divCardBody).appendTo(divCardBody)
-                    $("<p>").addClass("card-text").text(text).appendTo(divCardBody)
-                }
+            if (key == "_id") {
+                sunshutterId = data[key]
             }
-        })
+
+            switch (key) {
+                case "Apertura":
+                    title = "Apertura"
+
+                    if (data[key] == false) {
+                        text = "Chiuso"
+                        isOpen = false
+                    } else {
+                        text = "Aperto"
+                        _switchOpen.prop("disabled", false).trigger("click")
+                        isOpen = true
+                    }
+                    break
+
+                case "Consumo":
+                    title = "Consumo"
+                    text = `${data[key]} W`
+                    break
+
+                case "Produzione":
+                    title = "Produzione"
+                    text = `${data[key]} W`
+                    break
+
+                case "Orientamento":
+                    title = "Orientamento"
+                    text = `${data[key]} °`
+                    _orientamentoInput.val(data[key])
+                    break
+
+                default:
+                    break;
+            }
+
+            if (title != undefined && text != undefined) {
+                let divCard = $("<div>").addClass("card item").appendTo(_sectionData)
+                let divCardBody = $("<div>").addClass("card-body").appendTo(divCard)
+                $("<h5>").addClass("card-title").text(title).appendTo(divCardBody).appendTo(divCardBody)
+                $("<p>").addClass("card-text").text(text).appendTo(divCardBody)
+            }
+        }
     }
 });
