@@ -12,8 +12,17 @@ $(document).ready(function () {
     let _switchOpen = $("#toggler-1").prop("disabled", true)
     let _orientamentoInput = $("#orientamentoInput")
 
-    let serverSocket = io.connect("http://localhost:3000")
+    try {
+        let socket = io("http://localhost:3000", {transports: ["websocket"]})
 
+        socket.on("message", msg => {
+            console.log(msg)
+        })
+        socket.emit("messaged", "ciao")
+    } catch (error) {
+        console.log(error)
+    }
+    
     let isOpen = false
     let sunshutterId = null
 

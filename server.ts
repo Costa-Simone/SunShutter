@@ -6,6 +6,8 @@ import _dotenv from "dotenv"
 // import _cors from "cors"
 import { Server, Socket } from 'socket.io'
 
+const WebSocket = require("ws")
+
 // lettura porte e variabili di ambiente
 _dotenv.config({path: "./.env"})
 
@@ -40,20 +42,20 @@ function init() {
 // Websocket connection
 //////////////////////////////////////////////////////////////////
 
-const io = new Server(server)
+const io = require("socket.io")(server, {
+    cors: {
+        origins: "*:*",
+        mathods: ["GET", "POST"]
+    }
+})
 
-io.on('connection', (socket) => {
-    console.log('A client connected');
-  
-    socket.on('chat message', (message) => {
-      console.log('Received message:', message);
-      io.emit('chat message', message); // Broadcast message to all connected clients
-    });
-  
-    socket.on('disconnect', () => {
-      console.log('Client disconnected');
-    });
-});
+io.on("connection", socket => {
+    socket.on("disconnect", () => console.log("Client disconnected"))
+    socket.on("messaged", args => {
+        io.emit("message", args)
+        console.log(args)
+    })
+})
 
 //////////////////////////////////////////////////////////////////
 // Route Middelware
