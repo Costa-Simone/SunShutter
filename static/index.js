@@ -13,7 +13,7 @@ $(document).ready(function () {
     let _orientamentoInput = $("#orientamentoInput")
 
     try {
-        let socket = io("http://localhost:3000", {transports: ["websocket"]})
+        let socket = io("sunshutter.onrender.com", {transports: ["websocket"]})
 
         socket.on("message", msg => {
             console.log(msg)
@@ -22,7 +22,7 @@ $(document).ready(function () {
     } catch (error) {
         console.log(error)
     }
-    
+
     let isOpen = false
     let sunshutterId = null
 
