@@ -51,6 +51,19 @@ io.on("connection", socket => {
         io.emit("message", args)
         console.log(args)
     })
+    socket.on("updateData", async args => {
+        const client = new MongoClient(connectionString);
+        await client.connect();
+        let collection = client.db(DBNAME).collection("sunshutter");
+        let rq = collection.updateOne({_id: new ObjectId("65ddc2db73e183cb7a162a62")}, {$set: args})
+        rq.then(data => {
+            GetData()
+        })
+        rq.catch(error => {
+            console.log(error)
+        })
+        rq.finally(() => client.close());
+    })
 
     GetData()
 
@@ -61,7 +74,6 @@ io.on("connection", socket => {
         let rq = collection.find().toArray()
     
         let aus = await rq
-        console.log(JSON.stringify(aus[0]))
     
         rq.finally(() => client.close());
     

@@ -22,6 +22,11 @@
     width: 100%;
 }
 
+.gridImage {
+    grid-row: span 5;
+    width: 350px;
+}
+
 a {
     cursor: pointer;
 }
