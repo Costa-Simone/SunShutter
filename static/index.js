@@ -16,7 +16,7 @@ $(document).ready(function () {
     let socket
 
     try {
-        socket = io("ws://localhost:3000", {transports: ["websocket"]})
+        socket = io("wss://sunshutter.onrender.com", {transports: ["websocket"]})
         // ws://localhost:3000
         // wss://sunshutter.onrender.com/
 
