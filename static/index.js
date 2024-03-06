@@ -16,7 +16,7 @@ $(document).ready(function () {
     let socket
 
     try {
-        socket = io("wss://sunshutter.onrender.com", {transports: ["websocket"]})
+        socket = io("ws://localhost:3000", {transports: ["websocket"]})
         // ws://localhost:3000
         // wss://sunshutter.onrender.com/
 
@@ -24,7 +24,7 @@ $(document).ready(function () {
             console.log(msg)
         })
         socket.on("sunshutter", data => {
-            Showdata(data)
+            Showdata(data, false)
         })
         socket.emit("messaged", "ciao")
 
@@ -39,8 +39,14 @@ $(document).ready(function () {
         let orientamento = parseFloat(_orientamentoInput.val())
 
         socket.emit("updateData",  { "Orientamento": orientamento, "Apertura": isOpen })
-    })
 
+        _sectionData.show()
+        _commands.hide()
+        _homeButton.addClass("active")
+        _commandsButton.removeClass("active")
+        _settingsButton.removeClass("active")
+    })
+    
     _switchOpen.on("click", function () {
         isOpen = !isOpen
     })
@@ -72,7 +78,7 @@ $(document).ready(function () {
         _settingsButton.addClass("active")
     })
 
-    function Showdata(data) {
+    function Showdata(data, isFirst = true) {
         data = JSON.parse(data)
 
         _sectionData.html("")
@@ -96,6 +102,10 @@ $(document).ready(function () {
                         isOpen = false
                     } else {
                         text = "Aperto"
+
+                        if (isFirst) {
+                            _switchOpen.prop("disabled", false).trigger("click")
+                        }
                         _switchOpen.prop("disabled", false).trigger("click")
                         isOpen = true
                     }
