@@ -19,7 +19,7 @@ const PORT:number = parseInt(process.env.PORT) ;
 let paginaErrore;
 
 server.listen(PORT, () => {
-    init()
+    // init()
 
     console.log(`Il Server è in ascolto sulla porta ${PORT}`);
 });
@@ -40,17 +40,23 @@ function init() {
 
 const io = require("socket.io")(server, {
     cors: {
-        origins: "*:*",
-        mathods: ["GET", "POST"]
+        origins: "*:*"
     }
 })
 
 io.on("connection", socket => {
+    console.log(socket.handshake.address)
+    // io.emit("messaged", "ciao client")
     socket.on("disconnect", () => console.log("Client disconnected"))
     socket.on("messaged", args => {
-        io.emit("message", args)
+        console.log(args)
+        io.emit("messaged", "ciao client")
+    })
+
+    socket.on("updateArduino", args => {
         console.log(args)
     })
+    
     socket.on("updateData", async args => {
         const client = new MongoClient(connectionString);
         await client.connect();
