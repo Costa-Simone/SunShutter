@@ -5,17 +5,17 @@ import _express from "express"
 import _dotenv from "dotenv"
 
 // lettura porte e variabili di ambiente
-_dotenv.config({path: "./.env"})
+_dotenv.config({ path: "./.env" })
 
 // variabili di mongo
 import { MongoClient, ObjectId } from "mongodb"
-const DBNAME:string = process.env.DBNAME
-const connectionString:string = process.env.connectionStringAtlas
+const DBNAME: string = process.env.DBNAME
+const connectionString: string = process.env.connectionStringAtlas
 const app = _express()
 
 // creazione ed avvio del server
 const server = _http.createServer(app)
-const PORT:number = parseInt(process.env.PORT) ;
+const PORT: number = parseInt(process.env.PORT);
 let paginaErrore;
 
 server.listen(PORT, () => {
@@ -26,7 +26,7 @@ server.listen(PORT, () => {
 
 function init() {
     _fs.readFile("./static/error.html", (err, data) => {
-        if(err) {
+        if (err) {
             paginaErrore = "<h1>Pagina non trovata</h1>"
         } else {
             paginaErrore = data.toString();
@@ -53,15 +53,25 @@ io.on("connection", socket => {
         io.emit("messaged", "ciao client")
     })
 
-    socket.on("updateArduino", args => {
-        console.log(args)
+    socket.on("updateArduino", async args => {
+        const client = new MongoClient(connectionString);
+        await client.connect();
+        let collection = client.db(DBNAME).collection("sunshutter");
+        let rq = collection.updateOne({ _id: new ObjectId("65ddc2db73e183cb7a162a62") }, { $set: args })
+        rq.then(data => {
+            GetData()
+        })
+        rq.catch(error => {
+            console.log(error)
+        })
+        rq.finally(() => client.close());
     })
-    
+
     socket.on("updateData", async args => {
         const client = new MongoClient(connectionString);
         await client.connect();
         let collection = client.db(DBNAME).collection("sunshutter");
-        let rq = collection.updateOne({_id: new ObjectId("65ddc2db73e183cb7a162a62")}, {$set: args})
+        let rq = collection.updateOne({ _id: new ObjectId("65ddc2db73e183cb7a162a62") }, { $set: args })
         rq.then(data => {
             GetData()
         })
@@ -78,11 +88,11 @@ io.on("connection", socket => {
         await client.connect();
         let collection = client.db(DBNAME).collection("sunshutter");
         let rq = collection.find().toArray()
-    
+
         let aus = await rq
-    
+
         rq.finally(() => client.close());
-    
+
         io.emit("sunshutter", JSON.stringify(aus[0]))
     }
 })
@@ -101,16 +111,16 @@ app.use("/", (req: any, res: any, next: any) => {
 app.use("/", _express.static("./static"))
 
 // 3. Lettura parametri body
-app.use("/", _express.json({limit: "50mb"})) // bodyParse
+app.use("/", _express.json({ limit: "50mb" })) // bodyParse
 
-app.use("/", _express.urlencoded({limit: "50mb", extended: true}))
+app.use("/", _express.urlencoded({ limit: "50mb", extended: true }))
 
 app.use("/", (req, res, next) => {
-    if(Object.keys(req["query"]).length > 0) {
+    if (Object.keys(req["query"]).length > 0) {
         console.log(`      ${JSON.stringify(req["query"])}`)
     }
 
-    if(Object.keys(req["body"]).length > 0) {
+    if (Object.keys(req["body"]).length > 0) {
         console.log(`      ${JSON.stringify(req["body"])}`)
     }
 
@@ -127,7 +137,7 @@ app.get("/api/richiesta1", async (req, res, next) => {
     const client = new MongoClient(connectionString);
     await client.connect();
     let collection = client.db(DBNAME).collection("unicorns");
-    let rq = collection.findOne({name: unicornName})
+    let rq = collection.findOne({ name: unicornName })
 
     rq.then((data) => {
         res.send(data)
@@ -144,7 +154,7 @@ app.get("/api/richiesta1", async (req, res, next) => {
 app.get("/api/getCollections", async (req, res, next) => {
     const client = new MongoClient(connectionString);
     await client.connect();
-    
+
     let db = client.db(DBNAME)
     let rq = db.listCollections().toArray()
 
@@ -166,7 +176,7 @@ app.get("/api/:collection", async (req, res, next) => {
 
     const client = new MongoClient(connectionString);
     await client.connect();
-    
+
     let db = client.db(DBNAME)
     let rq = db.collection(collectionName).find(filter).toArray()
 
@@ -178,7 +188,7 @@ app.get("/api/:collection", async (req, res, next) => {
         res.status(500)
         res.send(`Errore lettura delle collezioni: ${err}`)
     })
-    
+
     rq.finally(() => client.close());
 })
 
@@ -187,7 +197,7 @@ app.get("/api/:collection/:id", async (req, res, next) => {
     let id = new ObjectId(req["params"]["id"])
     let objId
 
-    if(ObjectId.isValid(id)) {
+    if (ObjectId.isValid(id)) {
         objId = new ObjectId(id)
     } else {
         objId = id as unknown as ObjectId
@@ -195,9 +205,9 @@ app.get("/api/:collection/:id", async (req, res, next) => {
 
     const client = new MongoClient(connectionString);
     await client.connect();
-    
+
     let db = client.db(DBNAME)
-    let rq = db.collection(collectionName).findOne({_id: id})
+    let rq = db.collection(collectionName).findOne({ _id: id })
 
     rq.then((data) => {
         res.send(data)
@@ -207,7 +217,7 @@ app.get("/api/:collection/:id", async (req, res, next) => {
         res.status(500)
         res.send(`Errore lettura delle collezioni: ${err}`)
     })
-    
+
     rq.finally(() => client.close());
 })
 
@@ -217,10 +227,10 @@ app.post("/api/:collection", async (req, res, next) => {
 
     const client = new MongoClient(connectionString);
     await client.connect();
-    
+
     let db = client.db(DBNAME)
     let rq = db.collection(collectionName).insertOne(newRecord)
-    
+
     rq.then((data) => {
         res.send(data)
     });
@@ -229,7 +239,7 @@ app.post("/api/:collection", async (req, res, next) => {
         res.status(500)
         res.send(`Errore lettura delle collezioni: ${err}`)
     })
-    
+
     rq.finally(() => client.close());
 })
 
@@ -238,7 +248,7 @@ app.delete("/api/:collection/:id", async (req, res, next) => {
     let id = new ObjectId(req["params"]["id"])
     let objId
 
-    if(ObjectId.isValid(id)) {
+    if (ObjectId.isValid(id)) {
         objId = new ObjectId(id)
     } else {
         objId = id as unknown as ObjectId
@@ -246,9 +256,9 @@ app.delete("/api/:collection/:id", async (req, res, next) => {
 
     const client = new MongoClient(connectionString);
     await client.connect();
-    
+
     let db = client.db(DBNAME)
-    let rq = db.collection(collectionName).deleteOne({_id: id})
+    let rq = db.collection(collectionName).deleteOne({ _id: id })
 
     rq.then((data) => {
         res.send(data)
@@ -258,7 +268,7 @@ app.delete("/api/:collection/:id", async (req, res, next) => {
         res.status(500)
         res.send(`Errore lettura delle collezioni: ${err}`)
     })
-    
+
     rq.finally(() => client.close());
 })
 
@@ -277,7 +287,7 @@ app.patch("/api/:collection/:id", async (req, res, next) => {
     let id = new ObjectId(req["params"]["id"])
     let objId
 
-    if(ObjectId.isValid(id)) {
+    if (ObjectId.isValid(id)) {
         objId = new ObjectId(id)
     } else {
         objId = id as unknown as ObjectId
@@ -287,9 +297,9 @@ app.patch("/api/:collection/:id", async (req, res, next) => {
 
     const client = new MongoClient(connectionString);
     await client.connect();
-    
+
     let db = client.db(DBNAME)
-    let rq = db.collection(collectionName).updateOne({_id: id}, action)
+    let rq = db.collection(collectionName).updateOne({ _id: id }, action)
 
     rq.then((data) => {
         res.send(data)
@@ -299,7 +309,7 @@ app.patch("/api/:collection/:id", async (req, res, next) => {
         res.status(500)
         res.send(`Errore lettura delle collezioni: ${err}`)
     })
-    
+
     rq.finally(() => client.close());
 })
 
@@ -310,7 +320,7 @@ app.patch("/api/:collection", async (req, res, next) => {
 
     const client = new MongoClient(connectionString);
     await client.connect();
-    
+
     let db = client.db(DBNAME)
     let rq = db.collection(collectionName).updateMany(filters, action)
 
@@ -322,7 +332,7 @@ app.patch("/api/:collection", async (req, res, next) => {
         res.status(500)
         res.send(`Errore lettura delle collezioni: ${err}`)
     })
-    
+
     rq.finally(() => client.close());
 })
 
@@ -341,7 +351,7 @@ app.put("/api/:collection/:id", async (req, res, next) => {
     let id = new ObjectId(req["params"]["id"])
     let objId
 
-    if(ObjectId.isValid(id)) {
+    if (ObjectId.isValid(id)) {
         objId = new ObjectId(id)
     } else {
         objId = id as unknown as ObjectId
@@ -351,9 +361,9 @@ app.put("/api/:collection/:id", async (req, res, next) => {
 
     const client = new MongoClient(connectionString);
     await client.connect();
-    
+
     let db = client.db(DBNAME)
-    let rq = db.collection(collectionName).updateOne({_id: id}, {$set: newValues})
+    let rq = db.collection(collectionName).updateOne({ _id: id }, { $set: newValues })
 
     rq.then((data) => {
         res.send(data)
@@ -363,7 +373,7 @@ app.put("/api/:collection/:id", async (req, res, next) => {
         res.status(500)
         res.send(`Errore lettura delle collezioni: ${err}`)
     })
-    
+
     rq.finally(() => client.close());
 })
 
@@ -374,8 +384,8 @@ app.put("/api/:collection/:id", async (req, res, next) => {
 app.use("/", (req, res, next) => {
     res.status(404)
 
-    if(req.originalUrl.startsWith("/api/")) {
-        res.send({error: "API non implementata"})
+    if (req.originalUrl.startsWith("/api/")) {
+        res.send({ error: "API non implementata" })
     } else {
         res.send(paginaErrore)
     }
