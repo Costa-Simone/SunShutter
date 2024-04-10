@@ -13,11 +13,14 @@ body {
 
 .grid {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
     grid-template-rows: 4;
-    width: 100%;
     height: auto;
     row-gap: 20px;
+    vertical-align: center;
+    column-gap: 15px;
+    margin-top: 30px;
+    flex-shrink: 1;
 }
 
 h2 {
@@ -25,8 +28,10 @@ h2 {
 }
 
 .gridImage {
-    grid-row: span 5;
-    width: 350px;
+    width: 500px;
+    margin: 0 auto;
+    border-radius: 36px;
+    margin-block: auto;
 }
 
 a {
@@ -201,24 +206,30 @@ p {
     opacity: 0.1;
 }
 
-.l-bg-cyan {
-    background: linear-gradient(135deg, #289cf5, #84c0ec) !important;
-    color: #fff;
-}
-
 .l-bg-green {
     background: linear-gradient(135deg, #23bdb8 0%, #43e794 100%) !important;
     color: #fff;
 }
 
 .l-bg-orange {
-    background: linear-gradient(to right, #f9900e, #ffba56) !important;
+    background: linear-gradient(to right, #373b44, #ffba56) !important;
     color: #fff;
 }
 
 .l-bg-cyan {
-    background: linear-gradient(135deg, #289cf5, #84c0ec) !important;
+    background: linear-gradient(to right, #373b44, #84c0ec) !important;
     color: #fff;
+}
+
+.pointer {
+    cursor: pointer;
+}
+
+.canvasContainer {
+    position: relative;
+    margin: auto;
+    height: 50vh;
+    width: 50vw;
 }
 
 @media (max-width: 1060px) {
@@ -227,6 +238,10 @@ p {
         grid-template-columns: 1fr;
         justify-content: center;
         align-items: center;
+    }
+
+    .pippo {
+        flex-direction: column;
     }
 
     .item {
@@ -242,5 +257,15 @@ p {
     .gridImage {
         margin: 0 auto;
         width: 300px;
+        border-radius: 36px;
+    }
+
+    .canvasContainer {
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    .canvasContainer canvas {
+        width: 90%;
     }
 }

@@ -9,6 +9,7 @@ _dotenv.config({ path: "./.env" })
 
 // variabili di mongo
 import { MongoClient, ObjectId } from "mongodb"
+import { setTimeout } from "timers";
 const DBNAME: string = process.env.DBNAME
 const connectionString: string = process.env.connectionStringAtlas
 const app = _express()
@@ -16,7 +17,10 @@ const app = _express()
 // creazione ed avvio del server
 const server = _http.createServer(app)
 const PORT: number = parseInt(process.env.PORT);
+
 let paginaErrore;
+let produzione = 0
+let dataOdierna = new Date()
 
 server.listen(PORT, () => {
     // init()
@@ -82,6 +86,57 @@ io.on("connection", socket => {
     })
 
     GetData()
+    GetValoriMediProduzione()
+    GetValoriMediConsumo()
+    GetValoriMediBatteria()
+
+    async function GetValoriMediBatteria() {
+        let client = new MongoClient(connectionString);
+        await client.connect();
+        let collection = client.db(DBNAME).collection("valoriMediBatteria");
+    
+        let request = collection.find({}, {projection: {_id: 0}}).toArray()
+        request.catch(err => {
+            console.log(err)
+        })
+        request.then(data => {
+            io.emit("valoriMediBatteria", JSON.stringify(data[0]))
+        })
+
+        request.finally(() => client.close())
+    }
+
+    async function GetValoriMediConsumo() {
+        let client = new MongoClient(connectionString);
+        await client.connect();
+        let collection = client.db(DBNAME).collection("valoriMediConsumo");
+    
+        let request = collection.find({}, {projection: {_id: 0}}).toArray()
+        request.catch(err => {
+            console.log(err)
+        })
+        request.then(data => {
+            io.emit("valoriMediConsumo", JSON.stringify(data[0]))
+        })
+
+        request.finally(() => client.close())
+    }
+
+    async function GetValoriMediProduzione() {
+        let client = new MongoClient(connectionString);
+        await client.connect();
+        let collection = client.db(DBNAME).collection("valoriMediProduzione");
+    
+        let request = collection.find({}, {projection: {_id: 0}}).toArray()
+        request.catch(err => {
+            console.log(err)
+        })
+        request.then(data => {
+            io.emit("valoriMedi", JSON.stringify(data[0]))
+        })
+
+        request.finally(() => client.close())
+    }
 
     async function GetData() {
         const client = new MongoClient(connectionString);
@@ -90,12 +145,48 @@ io.on("connection", socket => {
         let rq = collection.find().toArray()
 
         let aus = await rq
+        aus[0]["ProduzioneGiornaliera"] = produzione
+        io.emit("sunshutter", JSON.stringify(aus[0]))
 
         rq.finally(() => client.close());
+    }   
 
-        io.emit("sunshutter", JSON.stringify(aus[0]))
-    }
+    setInterval(async () => {
+        io.emit("valoreProduzione", produzione)
+    }, 10000)
 })
+
+setInterval(async () => {
+    let data = new Date()
+
+    const client = new MongoClient(connectionString);
+    await client.connect();
+    let collection = client.db(DBNAME).collection("sunshutter");
+    let rq = collection.findOne({ _id: new ObjectId("65ddc2db73e183cb7a162a62") }).then(data => {
+        produzione += data["Produzione"] / 20
+    }).catch(err => console.log(err))
+    
+    if(dataOdierna.getHours() != data.getHours()) {
+        let aus = { }
+        aus[Date.now()] = produzione / 60
+
+        let coll = client.db(DBNAME).collection("valoriMediProduzione")
+        let request = coll.updateOne({ _id: new ObjectId("66151ba63148cda33e61382d") }, { $set: aus})
+        request.catch(err => {
+            console.log(err)
+        })
+        request.then(data => {
+            console.log("Update effettuato!")
+        })
+
+        dataOdierna = data
+        produzione = 0
+
+        request.finally(() => client.close())
+    } else {
+        rq.finally(() => client.close())
+    }
+}, 20000)
 
 //////////////////////////////////////////////////////////////////
 // Route Middelware
