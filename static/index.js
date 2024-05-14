@@ -1,7 +1,6 @@
 "use strict"
 
 $(document).ready(function () {
-    let img = 'data:image/jpeg;base64,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'
     let _homeButton = $("#homeButton")
     let _commandsButton = $("#commandsButton")
     let _saveButton = $("#saveButton")
@@ -41,6 +40,8 @@ $(document).ready(function () {
             Showdata(data)
         })
         socket.on("valoriMediConsumo", data => {
+            dataConsumo = []
+            titlesConsumo = []
             let dataParsed = JSON.parse(data)
 
             for (let key in dataParsed) {
@@ -49,6 +50,8 @@ $(document).ready(function () {
             }
         })
         socket.on("valoriMediBatteria", data => {
+            dataBatt = []
+            titlesBatt = []
             let dataParsed = JSON.parse(data)
 
             for (let key in dataParsed) {
@@ -57,6 +60,8 @@ $(document).ready(function () {
             }
         })
         socket.on("valoriMedi", data => {
+            dataChart = []
+            titlesChart = []
             let dataParsed = JSON.parse(data)
 
             for (let key in dataParsed) {
@@ -235,12 +240,12 @@ $(document).ready(function () {
 
                 case "Consumo":
                     title = "Consumo"
-                    text = `${data[key]} Wh`
+                    text = `${parseFloat(data[key]) / 1000} kWh`
                     break
 
                 case "Produzione":
                     title = "Produzione"
-                    text = `${data[key]} Wh`
+                    text = `${parseFloat(data[key]) / 1000} kWh`
                     break
 
                 case "Orientamento":

@@ -19,6 +19,7 @@ const server = _http.createServer(app)
 const PORT: number = parseInt(process.env.PORT);
 
 let paginaErrore;
+let prod = 0;
 let produzione = 0
 let dataOdierna = new Date()
 
@@ -56,7 +57,7 @@ io.on("connection", socket => {
         console.log(args)
         io.emit("messaged", "ciao client")
     })
-
+    
     socket.on("updateArduino", async args => {
         const client = new MongoClient(connectionString);
         await client.connect();
@@ -142,51 +143,41 @@ io.on("connection", socket => {
         const client = new MongoClient(connectionString);
         await client.connect();
         let collection = client.db(DBNAME).collection("sunshutter");
-        let rq = collection.find().toArray()
+        let data = await collection.find().toArray()
 
-        let aus = await rq
-        aus[0]["ProduzioneGiornaliera"] = produzione
-        io.emit("sunshutter", JSON.stringify(aus[0]))
+        prod = data[0]["Produzione"]
+        data[0]["ProduzioneGiornaliera"] = produzione
+        io.emit("sunshutter", JSON.stringify(data[0]))
 
-        rq.finally(() => client.close());
+        client.close()
     }   
 
     setInterval(async () => {
         io.emit("valoreProduzione", produzione)
-    }, 10000)
+    }, 61000)
 })
 
 setInterval(async () => {
     let data = new Date()
 
-    const client = new MongoClient(connectionString);
-    await client.connect();
-    let collection = client.db(DBNAME).collection("sunshutter");
-    let rq = collection.findOne({ _id: new ObjectId("65ddc2db73e183cb7a162a62") }).then(data => {
-        produzione += data["Produzione"] / 20
-    }).catch(err => console.log(err))
-    
-    if(dataOdierna.getHours() != data.getHours()) {
+    produzione += prod / 7
+
+    if(dataOdierna.getDay() != data.getDay()) {
+        const client = new MongoClient(connectionString);
+        await client.connect();
+        let collection = client.db(DBNAME).collection("sunshutter");
         let aus = { }
         aus[Date.now()] = produzione / 60
 
         let coll = client.db(DBNAME).collection("valoriMediProduzione")
-        let request = coll.updateOne({ _id: new ObjectId("66151ba63148cda33e61382d") }, { $set: aus})
-        request.catch(err => {
-            console.log(err)
-        })
-        request.then(data => {
-            console.log("Update effettuato!")
-        })
+        let request = await coll.updateOne({ _id: new ObjectId("66151ba63148cda33e61382d") }, { $set: aus})
 
         dataOdierna = data
         produzione = 0
 
-        request.finally(() => client.close())
-    } else {
-        rq.finally(() => client.close())
+        client.close()
     }
-}, 20000)
+}, 60000)
 
 //////////////////////////////////////////////////////////////////
 // Route Middelware
