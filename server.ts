@@ -57,6 +57,13 @@ io.on("connection", socket => {
         console.log(args)
         io.emit("messaged", "ciao client")
     })
+
+    socket.on("JOIN-ROOM", function (data) {
+        // Inserisce il clientSocket nella room scelta dall'utente
+        socket.join("user");
+        console.log(`User inserito correttamente nella stanza user`);
+        socket.emit("JOIN-RESULT", "OK");
+    });
     
     socket.on("updateArduino", async args => {
         const client = new MongoClient(connectionString);
@@ -101,7 +108,7 @@ io.on("connection", socket => {
             console.log(err)
         })
         request.then(data => {
-            io.emit("valoriMediBatteria", JSON.stringify(data[0]))
+            io.to("user").emit("valoriMediBatteria", JSON.stringify(data[0]))
         })
 
         request.finally(() => client.close())
@@ -117,7 +124,7 @@ io.on("connection", socket => {
             console.log(err)
         })
         request.then(data => {
-            io.emit("valoriMediConsumo", JSON.stringify(data[0]))
+            io.to("user").emit("valoriMediConsumo", JSON.stringify(data[0]))
         })
 
         request.finally(() => client.close())
@@ -133,7 +140,7 @@ io.on("connection", socket => {
             console.log(err)
         })
         request.then(data => {
-            io.emit("valoriMedi", JSON.stringify(data[0]))
+            io.to("user").emit("valoriMedi", JSON.stringify(data[0]))
         })
 
         request.finally(() => client.close())
@@ -145,15 +152,16 @@ io.on("connection", socket => {
         let collection = client.db(DBNAME).collection("sunshutter");
         let data = await collection.find().toArray()
 
+        io.emit("sunshutter", JSON.stringify(data[0]))
         prod = data[0]["Produzione"]
         data[0]["ProduzioneGiornaliera"] = produzione
-        io.emit("sunshutter", JSON.stringify(data[0]))
+        io.to("user").emit("sunshutter", JSON.stringify(data[0]))
 
         client.close()
     }   
 
     setInterval(async () => {
-        io.emit("valoreProduzione", produzione)
+        io.to("user").emit("valoreProduzione", produzione)
     }, 61000)
 })
 

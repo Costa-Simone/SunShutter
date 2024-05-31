@@ -28,10 +28,22 @@ $(document).ready(function () {
     _modeList.val(1)
     $("#cardooo").hide()
 
+    _orientamentoInput.on("input", () => {
+        let value = _orientamentoInput.val()
+
+        if (value < 0) {
+            _orientamentoInput.val(0)
+        } else if (value > 165) {
+            _orientamentoInput.val(165)
+        }
+    })
+
     try {
         socket = io("ws://localhost:3000", { transports: ["websocket"] })
         // ws://84.33.125.234:3000
         // ws://localhost:3000
+
+        socket.emit("JOIN-ROOM", "sunshutter")
 
         socket.on("message", msg => {
             console.log(msg)
@@ -104,8 +116,15 @@ $(document).ready(function () {
 
     _switchOpen.on("click", function () {
         isOpen = !isOpen
-    })
 
+        if(isOpen) {
+            $("#containerOrientamento").show()
+        } else {
+            $("#containerOrientamento").hide()
+            _orientamentoInput.val(0)
+        }
+    })
+    
     _homeButton.on("click", function () {
         _sectionData.show()
         _commands.hide()
@@ -228,6 +247,7 @@ $(document).ready(function () {
                         text = "Chiuso"
                         _switchOpen.prop("disabled", false)
                         isOpen = false
+                        $("#containerOrientamento").hide()
                     } else {
                         text = "Aperto"
 
@@ -251,7 +271,13 @@ $(document).ready(function () {
                 case "Orientamento":
                     title = "Inclinazione del pannello"
                     text = `${data[key]}°`
-                    _orientamentoInput.val(data[key])
+
+                    if(isOpen) {
+                        _orientamentoInput.val(data[key])
+                    } else {
+                        _orientamentoInput.val(0)
+                    }
+                    
                     break
 
                 case "Mode":
@@ -318,7 +344,7 @@ $(document).ready(function () {
             divClone.find("h5").text(title)
 
             if (title == "Ricavo giornaliero") {
-                divClone.find("h2").text(text).prop("id", "ricavatoOdierno")
+                divClone.find("h2").text("0 €").prop("id", "ricavatoOdierno")
             } else {
                 divClone.find("h2").text(text)
             }
