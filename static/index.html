@@ -45,7 +45,7 @@
     </div>
   </nav>
 
-  <div class="col-xl-6 col-lg-6" id="cardooo">
+  <div class="col-xl-6 col-lg-6" id="divBase">
     <div class="card l-bg-cherry">
       <div class="card-statistic-3 p-4">
         <div class="card-icon card-icon-large"><i class="fas fa-lock"></i></div>
@@ -83,8 +83,38 @@
     </div>
 
     <div id="charts" style="width: 90%; margin: 0 auto;">
-      <div class="canvasContainer">
-        <canvas id="mediaValori"></canvas>
+      <br>
+      <h2 style="margin: 0 auto;">Consumo:</h2>
+      <div style="display: flex; margin: 0 auto; column-gap: 25px;">
+        <div class="canvasContainer">
+          <canvas id="consumoGiornaliero"></canvas>
+        </div>
+        <div class="canvasContainer">
+          <canvas id="consumoAnnuale"></canvas>
+        </div>
+      </div>
+
+      <br>
+      <h2 style="margin: 0 auto;">Produzione:</h2>
+      <div style="display: flex; margin: 0 auto; column-gap: 25px;">
+        <div class="canvasContainer">
+          <canvas id="produzioneGiornaliero"></canvas>
+        </div>
+        <div class="canvasContainer">
+          <canvas id="produzioneAnnuale"></canvas>
+        </div>
+      </div>
+
+      <br>
+      <h2 style="margin: 0 auto;">Batteria:</h2>
+      <div style="display: flex; margin: 0 auto; column-gap: 25px;">
+        <div class="canvasContainer">
+          <canvas id="batteriaGiornaliero" style="display: inline-block;"></canvas>
+        </div>
+  
+        <div class="canvasContainer">
+          <canvas id="batteriaAnnuale" style="display: inline-block;"></canvas>
+        </div>
       </div>
     </div>
 

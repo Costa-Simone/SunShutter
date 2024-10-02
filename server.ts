@@ -52,7 +52,10 @@ const io = require("socket.io")(server, {
 io.on("connection", socket => {
     console.log(socket.handshake.address)
     // io.emit("messaged", "ciao client")
-    socket.on("disconnect", () => console.log("Client disconnected"))
+    socket.on("disconnect", () => {
+        console.log("Client disconnected")
+        socket.leave("user")
+    })
     socket.on("messaged", args => {
         console.log(args)
         io.emit("messaged", "ciao client")

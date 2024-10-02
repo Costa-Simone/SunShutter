@@ -225,10 +225,11 @@ p {
 }
 
 .canvasContainer {
-    position: relative;
+    /* position: relative; */
     margin: auto;
     height: 50vh;
-    width: 50vw;
+    width: 70vw;
+    display: flex;
 }
 
 @media (max-width: 1060px) {

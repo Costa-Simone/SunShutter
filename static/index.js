@@ -26,7 +26,7 @@ $(document).ready(function () {
     let titlesBatt = []
 
     _modeList.val(1)
-    $("#cardooo").hide()
+    $("#divBase").hide()
 
     _orientamentoInput.on("input", () => {
         let value = _orientamentoInput.val()
@@ -101,7 +101,7 @@ $(document).ready(function () {
     })
     _saveButton.on("click", function () {
         if (_modeList.val() == 1) {
-            socket.emit("updateData", { "Mode": "a" })
+            socket.emit("updateData", { "Mode": "a", "Orientamento": orientamento })
         } else {
             let orientamento = parseFloat(_orientamentoInput.val())
 
@@ -117,14 +117,14 @@ $(document).ready(function () {
     _switchOpen.on("click", function () {
         isOpen = !isOpen
 
-        if(isOpen) {
+        if (isOpen) {
             $("#containerOrientamento").show()
         } else {
-            $("#containerOrientamento").hide()
+            // $("#containerOrientamento").hide()
             _orientamentoInput.val(0)
         }
     })
-    
+
     _homeButton.on("click", function () {
         _sectionData.show()
         _commands.hide()
@@ -135,7 +135,10 @@ $(document).ready(function () {
         _sectionData.hide()
         _commands.hide()
         _charts.show()
-        ShowMediaChart()
+        // ShowMediaChart()
+        ShowConsumoCharts()
+        ShowProduzioneCharts()
+        ShowBatteriaCharts()
     })
 
     _commandsButton.on("click", function () {
@@ -143,6 +146,183 @@ $(document).ready(function () {
         _commands.show()
         _charts.hide()
     })
+
+    // generatore grafico media produzione giornaliera tramite SweetAlert
+    function ShowMediaProduzioneChart() {
+        Swal.fire({
+            title: "Media produzione giornaliera",
+            html: "<canvas id='canvasProduzione'></canvas>",
+            didOpen: () => {
+                const chart = new Chart($("#canvasProduzione"), {
+                    type: 'bar',
+                    data: {
+                        labels: titlesChart,
+                        datasets: [{
+                            data: dataChart,
+                            backgroundColor: "rgb(184, 134, 11)",
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            title: {
+                                display: false
+                            },
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                })
+            }
+        });
+    }
+
+    // generatore card pagina home
+    function Showdata(data) {
+        data = JSON.parse(data)
+
+        $("#grid").html("")
+
+        for (let key in data) {
+            let title
+            let text
+
+            if (key == "_id") {
+                sunshutterId = data[key]
+            }
+
+            switch (key) {
+                case "Apertura":
+                    title = "Stato persiana"
+
+                    if (data[key] == false) {
+                        text = "Chiuso"
+                        _switchOpen.prop("disabled", false)
+                        isOpen = false
+                        // $("#containerOrientamento").hide()
+                    } else {
+                        text = "Aperto"
+
+                        if (isFirst) {
+                            isFirst = false
+                            _switchOpen.prop("disabled", false).trigger("click")
+                        }
+                    }
+                    break
+
+                case "Consumo":
+                    title = "Consumo"
+                    text = `${parseFloat(data[key]) / 1000} kWh`
+                    break
+
+                case "Produzione":
+                    title = "Produzione"
+                    text = `${parseFloat(data[key]) / 1000} kWh`
+                    break
+
+                case "Orientamento":
+                    title = "Inclinazione del pannello"
+                    text = `${data[key]}°`
+
+                    if (isOpen) {
+                        _orientamentoInput.val(data[key])
+                    } else {
+                        _orientamentoInput.val(0)
+                    }
+
+                    break
+
+                case "Mode":
+                    if (data[key] == "a") {
+                        _modeList.val(1)
+                        _commandsWrapper.hide()
+                    } else {
+                        _modeList.val(2)
+                        _commandsWrapper.show()
+                    }
+                    break
+
+                default:
+                    break;
+            }
+
+            // generatore card Consumo, Produzione e Orientamento
+            if (title != undefined && text != undefined) {
+                let divClone = $("#divBase").clone()
+                divClone.find("h5").text(title)
+                divClone.find("h2").text(text)
+
+                switch (key) {
+                    case "Consumo":
+                        divClone.find("i").removeClass("fa-lock").addClass("fa-bolt")
+                        divClone.children("div").removeClass("l-bg-cherry").addClass("l-bg-orange-dark")
+                        divClone.addClass("pointer")
+
+                        divClone.on("click", () => {
+                            $("#chartsButton").trigger("click")
+                        })
+                        break
+
+                    case "Produzione":
+                        divClone.find("i").removeClass("fa-lock").addClass("fa-sun")
+                        divClone.children("div").removeClass("l-bg-cherry").addClass("l-bg-orange")
+                        divClone.addClass("pointer")
+
+                        divClone.on("click", () => {
+                            $("#chartsButton").trigger("click")
+                        })
+                        break
+
+                    case "Orientamento":
+                        divClone.find("i").removeClass("fa-lock").addClass("fa-retweet")
+                        divClone.children("div").removeClass("l-bg-cherry").addClass("l-bg-blue-dark")
+                        break
+                }
+
+                divClone.appendTo($("#grid")).show()
+            }
+        }
+
+        // generatore card Ricavo giornaliero e Batteria
+        for (let i = 0; i < 2; i++) {
+            let title
+            let text
+            let divClone = $("#divBase").clone()
+
+            if (i == 0) {
+                title = "Ricavo giornaliero"
+                text = (parseFloat(data["Produzione"]) * 0.2).toFixed(2) + " €"
+                divClone.find("i").removeClass("fa-lock").addClass("fa-money-bill")
+                divClone.children("div").removeClass("l-bg-cherry").addClass("l-bg-green-dark")
+                divClone.addClass("pointer")
+
+                divClone.on("click", () => {
+                    ShowMediaProduzioneChart()
+                })
+            } else {
+                title = "Batteria"
+                text = parseInt(data["Batteria"] * 100 / 3000).toString() + " %"
+                divClone.find("i").removeClass("fa-lock").addClass("fa-battery-full")
+                divClone.children("div").removeClass("l-bg-cherry").addClass("l-bg-cyan")
+                divClone.addClass("pointer")
+
+                divClone.on("click", () => {
+                    $("#chartsButton").trigger("click")
+                })
+            }
+
+            divClone.find("h5").text(title)
+
+            if (title == "Ricavo giornaliero") {
+                divClone.find("h2").text("0 €").prop("id", "ricavatoOdierno")
+            } else {
+                divClone.find("h2").text(text)
+            }
+
+            divClone.appendTo($("#grid")).show()
+        }
+    };
+
 
     function ShowMediaChart() {
         let chart = new Chart($("#mediaValori"), {
@@ -180,180 +360,283 @@ $(document).ready(function () {
                 },
                 maintainAspectRatio: false,
                 scales: {
-                  y: {
-                    stacked: true,
-                    grid: {
-                      display: true,
-                      color: "rgba(255,99,132,0.2)"
+                    y: {
+                        stacked: true,
+                        grid: {
+                            display: true,
+                            color: "rgba(255,99,132,0.2)"
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
                     }
-                  },
-                  x: {
-                    grid: {
-                      display: false
-                    }
-                  }
                 }
             }
         })
     }
 
-    function ShowMediaProduzioneChart() {
-        Swal.fire({
-            title: "Media produzione giornaliera",
-            html: "<canvas id='canvasProduzione'></canvas>",
-            didOpen: () => {
-                const chart = new Chart($("#canvasProduzione"), {
-                    type: 'bar',
-                    data: {
-                        labels: titlesChart,
-                        datasets: [{
-                            data: dataChart,
-                            backgroundColor: "rgb(184, 134, 11)",
-                        }]
+    function ShowConsumoCharts() {
+        let chart = new Chart($("#consumoGiornaliero"), {
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: "Consumo giornaliero",
+                        type: 'line',
+                        data: dataChart,
+                        borderColor: "rgba(255, 0, 0, 1)",
+                    }
+                ]
+            },
+            options: {
+                plugins: {
+                    title: {
+                        display: true
                     },
-                    options: {
-                        plugins: {
-                            title: {
-                                display: false
-                            },
-                            legend: {
-                                display: false
-                            }
+                    legend: {
+                        display: true
+                    },
+                },
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        stacked: true,
+                        grid: {
+                            display: true,
+                            color: "rgba(255,99,132,0.2)"
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
                         }
                     }
-                })
+                }
             }
-        });
+        })
+
+        chart.canvas.parentNode.style.width = '500px';
+        chart.canvas.parentNode.style.display = 'inline-block';
+
+        chart = new Chart($("#consumoAnnuale"), {
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: "Consumo annuale",
+                        type: 'line',
+                        data: dataChart,
+                        borderColor: "rgba(255, 0, 0, 1)",
+                    }
+                ]
+            },
+            options: {
+                plugins: {
+                    title: {
+                        display: true
+                    },
+                    legend: {
+                        display: true
+                    },
+                },
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        stacked: true,
+                        grid: {
+                            display: true,
+                            color: "rgba(255,99,132,0.2)"
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        })
+
+        chart.canvas.parentNode.style.width = '500px';
+        chart.canvas.parentNode.style.display = 'inline-block';
     }
 
-    function Showdata(data) {
-        data = JSON.parse(data)
-
-        $("#grid").html("")
-
-        for (let key in data) {
-            let title
-            let text
-
-            if (key == "_id") {
-                sunshutterId = data[key]
-            }
-
-            switch (key) {
-                case "Apertura":
-                    title = "Stato persiana"
-
-                    if (data[key] == false) {
-                        text = "Chiuso"
-                        _switchOpen.prop("disabled", false)
-                        isOpen = false
-                        $("#containerOrientamento").hide()
-                    } else {
-                        text = "Aperto"
-
-                        if (isFirst) {
-                            isFirst = false
-                            _switchOpen.prop("disabled", false).trigger("click")
+    function ShowProduzioneCharts() {
+        let chart = new Chart($("#produzioneGiornaliero"), {
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: "Produzione giornaliera",
+                        type: 'line',
+                        data: dataChart,
+                        borderColor: "rgba(0, 255, 0, 1)",
+                    }
+                ]
+            },
+            options: {
+                plugins: {
+                    title: {
+                        display: true
+                    },
+                    legend: {
+                        display: true
+                    },
+                },
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        stacked: true,
+                        grid: {
+                            display: true,
+                            color: "rgba(255,99,132,0.2)"
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
                         }
                     }
-                    break
-
-                case "Consumo":
-                    title = "Consumo"
-                    text = `${parseFloat(data[key]) / 1000} kWh`
-                    break
-
-                case "Produzione":
-                    title = "Produzione"
-                    text = `${parseFloat(data[key]) / 1000} kWh`
-                    break
-
-                case "Orientamento":
-                    title = "Inclinazione del pannello"
-                    text = `${data[key]}°`
-
-                    if(isOpen) {
-                        _orientamentoInput.val(data[key])
-                    } else {
-                        _orientamentoInput.val(0)
-                    }
-                    
-                    break
-
-                case "Mode":
-                    if (data[key] == "a") {
-                        _modeList.val(1)
-                        _commandsWrapper.hide()
-                    } else {
-                        _modeList.val(2)
-                        _commandsWrapper.show()
-                    }
-                    break
-
-                default:
-                    break;
-            }
-
-            if (title != undefined && text != undefined) {
-                let divClone = $("#cardooo").clone()
-                divClone.find("h5").text(title)
-                divClone.find("h2").text(text)
-
-                switch (key) {
-                    case "Consumo":
-                        divClone.find("i").removeClass("fa-lock").addClass("fa-bolt")
-                        divClone.children("div").removeClass("l-bg-cherry").addClass("l-bg-orange-dark")
-                        break
-
-                    case "Produzione":
-                        divClone.find("i").removeClass("fa-lock").addClass("fa-sun")
-                        divClone.children("div").removeClass("l-bg-cherry").addClass("l-bg-orange")
-                        break
-
-                    case "Orientamento":
-                        divClone.find("i").removeClass("fa-lock").addClass("fa-retweet")
-                        divClone.children("div").removeClass("l-bg-cherry").addClass("l-bg-blue-dark")
-                        break
                 }
-
-                divClone.appendTo($("#grid")).show()
             }
-        }
+        })
 
-        for (let i = 0; i < 2; i++) {
-            let title
-            let text
-            let divClone = $("#cardooo").clone()
+        chart.canvas.parentNode.style.width = '500px';
+        chart.canvas.parentNode.style.display = 'inline-block';
 
-            if (i == 0) {
-                title = "Ricavo giornaliero"
-                text = (parseFloat(data["Produzione"]) * 0.2).toFixed(2) + " €"
-                divClone.find("i").removeClass("fa-lock").addClass("fa-money-bill")
-                divClone.children("div").removeClass("l-bg-cherry").addClass("l-bg-green-dark")
-                divClone.on("click", () => {
-                    ShowMediaProduzioneChart()
-                })
-                divClone.addClass("pointer")
-            } else {
-                title = "Batteria"
-                text = parseInt(data["Batteria"] * 100 / 3000).toString() + " %"
-                divClone.find("i").removeClass("fa-lock").addClass("fa-battery-full")
-                divClone.children("div").removeClass("l-bg-cherry").addClass("l-bg-cyan")
+        chart = new Chart($("#produzioneAnnuale"), {
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: "Produzione annuale",
+                        type: 'line',
+                        data: dataChart,
+                        borderColor: "rgba(0, 255, 0, 1)",
+                    }
+                ]
+            },
+            options: {
+                plugins: {
+                    title: {
+                        display: true
+                    },
+                    legend: {
+                        display: true
+                    },
+                },
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        stacked: true,
+                        grid: {
+                            display: true,
+                            color: "rgba(255,99,132,0.2)"
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
             }
+        })
 
-            divClone.find("h5").text(title)
+        chart.canvas.parentNode.style.width = '500px';
+        chart.canvas.parentNode.style.display = 'inline-block';
+    }
 
-            if (title == "Ricavo giornaliero") {
-                divClone.find("h2").text("0 €").prop("id", "ricavatoOdierno")
-            } else {
-                divClone.find("h2").text(text)
+    function ShowBatteriaCharts() {
+        let chart = new Chart($("#batteriaGiornaliero"), {
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: "Batteria giornaliera",
+                        type: 'line',
+                        data: dataChart,
+                        borderColor: "rgba(0, 0, 255, 1)",
+                    }
+                ]
+            },
+            options: {
+                plugins: {
+                    title: {
+                        display: true
+                    },
+                    legend: {
+                        display: true
+                    },
+                },
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        stacked: true,
+                        grid: {
+                            display: true,
+                            color: "rgba(255,99,132,0.2)"
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
             }
+        })
 
-            divClone.appendTo($("#grid")).show()
-        }
+        chart.canvas.parentNode.style.width = '500px';
+        chart.canvas.parentNode.style.display = 'inline-block';
+
+        chart = new Chart($("#batteriaAnnuale"), {
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: "Batteria annuale",
+                        type: 'line',
+                        data: dataChart,
+                        borderColor: "rgba(0, 0, 255, 1)",
+                    }
+                ]
+            },
+            options: {
+                plugins: {
+                    title: {
+                        display: true
+                    },
+                    legend: {
+                        display: true
+                    },
+                },
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        stacked: true,
+                        grid: {
+                            display: true,
+                            color: "rgba(255,99,132,0.2)"
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        })
+
+        chart.canvas.parentNode.style.width = '500px';
+        chart.canvas.parentNode.style.display = 'inline-block';
     }
 });
 
+// generatore di numeri casuali tra a e b estremi escluso
 function generaNumero(a, b) { //estremo superiore escluso
     let ris = Math.floor((b - a) * Math.random()) + a;
 
