@@ -25,6 +25,8 @@ let produzione = 0
 let dataOdierna = new Date()
 let consumo = 0
 let consumoOrario = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 21, 23]
+let produzioneOrario = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 21, 23]
+let consumoGiornaliero = 0
 
 server.listen(PORT, () => {
     // init()
@@ -146,7 +148,7 @@ io.on("connection", socket => {
             console.log(err)
         })
         request.then(data => {
-            io.to("user").emit("valoriMedi", JSON.stringify(data[0]))
+            io.to("user").emit("valoriMediProduzione", JSON.stringify(data[0]))
         })
 
         request.finally(() => client.close())
@@ -168,7 +170,7 @@ io.on("connection", socket => {
     }   
 
     setInterval(async () => {
-        io.to("user").emit("valoreProduzione", {produzione: produzione, consumoOrario: consumoOrario})
+        io.to("user").emit("valoreProduzione", {produzione: produzione, consumoOrario: consumoOrario, produzioneOrario: produzioneOrario})
     }, 61000)
 })
 
@@ -183,7 +185,17 @@ setInterval(async () => {
     aus[consumoOrario.length - 1] = consumo
     consumoOrario = aus
 
+    aus = produzioneOrario
+
+    for(let i = 0; i < produzioneOrario.length - 1; i++) { // aggiornamento del vettore della produzione delle ultime 24h
+        aus[i] = aus[i + 1]
+    }
+
+    aus[produzioneOrario.length - 1] = prod
+    produzioneOrario = aus
+
     produzione += prod / 7 // prod / 7 ?????
+    consumoGiornaliero += consumo / 7 // consumo / 7 ?????
 
     if(dataOdierna.getDay() != data.getDay()) {
         const client = new MongoClient(connectionString);
@@ -194,6 +206,10 @@ setInterval(async () => {
 
         let coll = client.db(DBNAME).collection("valoriMediProduzione")
         let request = await coll.updateOne({ _id: new ObjectId("66151ba63148cda33e61382d") }, { $set: aus})
+
+        aus[Date.now()] = consumoGiornaliero / 60 // produzione / 60 ?????
+        coll = client.db(DBNAME).collection("valoriMediConsumo")
+        request = await coll.updateOne({ _id: new ObjectId("6615748ab64fc170b01d320d")}, { $set: aus})
 
         dataOdierna = data
         produzione = 0

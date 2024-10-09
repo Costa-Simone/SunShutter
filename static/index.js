@@ -26,6 +26,7 @@ $(document).ready(function () {
     let titlesBatt = []
 
     let consumoOrario = []
+    let produzioneOrario = []
 
     _modeList.val(1)
     $("#divBase").hide()
@@ -73,7 +74,7 @@ $(document).ready(function () {
                 titlesBatt.push("")
             }
         })
-        socket.on("valoriMedi", data => {
+        socket.on("valoriMediProduzione", data => {
             dataChart = []
             titlesChart = []
             let dataParsed = JSON.parse(data)
@@ -87,6 +88,7 @@ $(document).ready(function () {
         socket.on("valoreProduzione", data => {
             $("#ricavatoOdierno").text((parseFloat(data["produzione"]) / 1000 * 0.0792).toFixed(3) + " €")
             consumoOrario = data["consumoOrario"]
+            produzioneOrario = data["produzioneOrario"]
         })
     } catch (error) {
         console.log(error)
@@ -384,7 +386,7 @@ $(document).ready(function () {
         let labels = []
 
         consumoOrario.forEach((element, index) => {
-            labels.push("")
+            labels.push(`-${23 - index}h`)
         })
 
         let chart = new Chart($("#consumoGiornaliero"), {
@@ -431,12 +433,12 @@ $(document).ready(function () {
 
         chart = new Chart($("#consumoAnnuale"), {
             data: {
-                labels: [],
+                labels: titlesConsumo,
                 datasets: [
                     {
                         label: "Consumo annuale",
                         type: 'line',
-                        data: dataChart,
+                        data: dataConsumo,
                         borderColor: "rgba(255, 0, 0, 1)",
                     }
                 ]
@@ -473,14 +475,20 @@ $(document).ready(function () {
     }
     // generatore grafico produzione giornaliera e annuale
     function ShowProduzioneCharts() {
+        let labels = []
+
+        consumoOrario.forEach((element, index) => {
+            labels.push(`-${23 - index}h`)
+        })
+
         let chart = new Chart($("#produzioneGiornaliero"), {
             data: {
-                labels: [],
+                labels: labels,
                 datasets: [
                     {
                         label: "Produzione giornaliera",
                         type: 'line',
-                        data: dataChart,
+                        data: produzioneOrario,
                         borderColor: "rgba(0, 255, 0, 1)",
                     }
                 ]
@@ -517,7 +525,7 @@ $(document).ready(function () {
 
         chart = new Chart($("#produzioneAnnuale"), {
             data: {
-                labels: [],
+                labels: titlesChart,
                 datasets: [
                     {
                         label: "Produzione annuale",
