@@ -19,9 +19,12 @@ const server = _http.createServer(app)
 const PORT: number = parseInt(process.env.PORT);
 
 let paginaErrore;
+
 let prod = 0;
 let produzione = 0
 let dataOdierna = new Date()
+let consumo = 0
+let consumoOrario = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 21, 23]
 
 server.listen(PORT, () => {
     // init()
@@ -157,6 +160,7 @@ io.on("connection", socket => {
 
         io.emit("sunshutter", JSON.stringify(data[0]))
         prod = data[0]["Produzione"]
+        consumo = data[0]["Consumo"]
         data[0]["ProduzioneGiornaliera"] = produzione
         io.to("user").emit("sunshutter", JSON.stringify(data[0]))
 
@@ -164,21 +168,29 @@ io.on("connection", socket => {
     }   
 
     setInterval(async () => {
-        io.to("user").emit("valoreProduzione", produzione)
+        io.to("user").emit("valoreProduzione", {produzione: produzione, consumoOrario: consumoOrario})
     }, 61000)
 })
 
 setInterval(async () => {
     let data = new Date()
+    let aus = consumoOrario
 
-    produzione += prod / 7
+    for(let i = 0; i < consumoOrario.length - 1; i++) { // aggiornamento del vettore del consumo delle ultime 24h
+        aus[i] = aus[i + 1]
+    }
+
+    aus[consumoOrario.length - 1] = consumo
+    consumoOrario = aus
+
+    produzione += prod / 7 // prod / 7 ?????
 
     if(dataOdierna.getDay() != data.getDay()) {
         const client = new MongoClient(connectionString);
         await client.connect();
         let collection = client.db(DBNAME).collection("sunshutter");
         let aus = { }
-        aus[Date.now()] = produzione / 60
+        aus[Date.now()] = produzione / 60 // produzione / 60 ?????
 
         let coll = client.db(DBNAME).collection("valoriMediProduzione")
         let request = await coll.updateOne({ _id: new ObjectId("66151ba63148cda33e61382d") }, { $set: aus})

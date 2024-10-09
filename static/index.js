@@ -25,6 +25,8 @@ $(document).ready(function () {
     let dataBatt = []
     let titlesBatt = []
 
+    let consumoOrario = []
+
     _modeList.val(1)
     $("#divBase").hide()
 
@@ -83,7 +85,8 @@ $(document).ready(function () {
             }
         })
         socket.on("valoreProduzione", data => {
-            $("#ricavatoOdierno").text((parseFloat(data) / 1000 * 0.0792).toFixed(3) + " €")
+            $("#ricavatoOdierno").text((parseFloat(data["produzione"]) / 1000 * 0.0792).toFixed(3) + " €")
+            consumoOrario = data["consumoOrario"]
         })
     } catch (error) {
         console.log(error)
@@ -376,16 +379,22 @@ $(document).ready(function () {
             }
         })
     }
-
+    // generatore grafico consumo giornaliero e annuale
     function ShowConsumoCharts() {
+        let labels = []
+
+        consumoOrario.forEach((element, index) => {
+            labels.push("")
+        })
+
         let chart = new Chart($("#consumoGiornaliero"), {
             data: {
-                labels: [],
+                labels: labels,
                 datasets: [
                     {
                         label: "Consumo giornaliero",
                         type: 'line',
-                        data: dataChart,
+                        data: consumoOrario,
                         borderColor: "rgba(255, 0, 0, 1)",
                     }
                 ]
@@ -462,7 +471,7 @@ $(document).ready(function () {
         chart.canvas.parentNode.style.width = '500px';
         chart.canvas.parentNode.style.display = 'inline-block';
     }
-
+    // generatore grafico produzione giornaliera e annuale
     function ShowProduzioneCharts() {
         let chart = new Chart($("#produzioneGiornaliero"), {
             data: {
@@ -548,7 +557,7 @@ $(document).ready(function () {
         chart.canvas.parentNode.style.width = '500px';
         chart.canvas.parentNode.style.display = 'inline-block';
     }
-
+    // generatore grafico batteria giornaliera e annuale
     function ShowBatteriaCharts() {
         let chart = new Chart($("#batteriaGiornaliero"), {
             data: {
