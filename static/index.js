@@ -87,6 +87,7 @@ $(document).ready(function () {
         })
         socket.on("valoreProduzione", data => {
             $("#ricavatoOdierno").text((parseFloat(data["produzione"]) / 1000 * 0.0792).toFixed(3) + " €")
+            
             consumoOrario = data["consumoOrario"]
             produzioneOrario = data["produzioneOrario"]
         })

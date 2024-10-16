@@ -21,12 +21,14 @@ const PORT: number = parseInt(process.env.PORT);
 let paginaErrore;
 
 let prod = 0;
-let produzione = 0
+let produzioneGiornaliero = 0
 let dataOdierna = new Date()
 let consumo = 0
-let consumoOrario = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 21, 23]
-let produzioneOrario = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 21, 23]
+let batteria = 0
+let consumoOrario = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+let produzioneOrario = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
 let consumoGiornaliero = 0
+let batteriaGiornaliera = 0
 
 server.listen(PORT, () => {
     // init()
@@ -71,6 +73,8 @@ io.on("connection", socket => {
         socket.join("user");
         console.log(`User inserito correttamente nella stanza user`);
         socket.emit("JOIN-RESULT", "OK");
+
+        io.to("user").emit("valoreProduzione", {produzioneGiornaliero: produzioneGiornaliero, consumoOrario: consumoOrario, produzioneOrario: produzioneOrario})
     });
     
     socket.on("updateArduino", async args => {
@@ -102,7 +106,7 @@ io.on("connection", socket => {
     })
 
     GetData()
-    GetValoriMediProduzione()
+    GetValoriMediproduzione()
     GetValoriMediConsumo()
     GetValoriMediBatteria()
 
@@ -138,7 +142,7 @@ io.on("connection", socket => {
         request.finally(() => client.close())
     }
 
-    async function GetValoriMediProduzione() {
+    async function GetValoriMediproduzione() {
         let client = new MongoClient(connectionString);
         await client.connect();
         let collection = client.db(DBNAME).collection("valoriMediProduzione");
@@ -161,18 +165,23 @@ io.on("connection", socket => {
         let data = await collection.find().toArray()
 
         io.emit("sunshutter", JSON.stringify(data[0]))
-        prod = data[0]["Produzione"]
+        prod = data[0]["produzioneGiornaliero"]
         consumo = data[0]["Consumo"]
-        data[0]["ProduzioneGiornaliera"] = produzione
+        data[0]["produzioneGiornaliera"] = produzioneGiornaliero
         io.to("user").emit("sunshutter", JSON.stringify(data[0]))
 
         client.close()
-    }   
+    }
 
     setInterval(async () => {
-        io.to("user").emit("valoreProduzione", {produzione: produzione, consumoOrario: consumoOrario, produzioneOrario: produzioneOrario})
+        io.to("user").emit("valoreProduzione", {produzioneGiornaliero: produzioneGiornaliero, consumoOrario: consumoOrario, produzioneOrario: produzioneOrario})
     }, 61000)
 })
+
+setInterval(() => {
+    produzioneGiornaliero += prod
+    consumoGiornaliero += consumo
+}, 60000);
 
 setInterval(async () => {
     let data = new Date()
@@ -182,41 +191,39 @@ setInterval(async () => {
         aus[i] = aus[i + 1]
     }
 
-    aus[consumoOrario.length - 1] = consumo
+    aus[consumoOrario.length - 1] = consumoGiornaliero / 60
     consumoOrario = aus
 
     aus = produzioneOrario
 
-    for(let i = 0; i < produzioneOrario.length - 1; i++) { // aggiornamento del vettore della produzione delle ultime 24h
+    for(let i = 0; i < produzioneOrario.length - 1; i++) { // aggiornamento del vettore della produzioneGiornaliero delle ultime 24h
         aus[i] = aus[i + 1]
     }
 
-    aus[produzioneOrario.length - 1] = prod
+    aus[produzioneOrario.length - 1] = produzioneGiornaliero / 60
     produzioneOrario = aus
-
-    produzione += prod / 7 // prod / 7 ?????
-    consumoGiornaliero += consumo / 7 // consumo / 7 ?????
 
     if(dataOdierna.getDay() != data.getDay()) {
         const client = new MongoClient(connectionString);
         await client.connect();
         let collection = client.db(DBNAME).collection("sunshutter");
         let aus = { }
-        aus[Date.now()] = produzione / 60 // produzione / 60 ?????
+        aus[Date.now()] = produzioneGiornaliero / 24 / 60
 
-        let coll = client.db(DBNAME).collection("valoriMediProduzione")
+        let coll = client.db(DBNAME).collection("valoriMediproduzioneGiornaliero")
         let request = await coll.updateOne({ _id: new ObjectId("66151ba63148cda33e61382d") }, { $set: aus})
 
-        aus[Date.now()] = consumoGiornaliero / 60 // produzione / 60 ?????
+        aus[Date.now()] = consumoGiornaliero / 24 / 60
         coll = client.db(DBNAME).collection("valoriMediConsumo")
         request = await coll.updateOne({ _id: new ObjectId("6615748ab64fc170b01d320d")}, { $set: aus})
 
         dataOdierna = data
-        produzione = 0
+        produzioneGiornaliero = 0
+        consumoGiornaliero = 0
 
         client.close()
     }
-}, 60000)
+}, 3600000) // tempo di attesa per l'aggiornamento dei valori oraria: 3600000
 
 //////////////////////////////////////////////////////////////////
 // Route Middelware
