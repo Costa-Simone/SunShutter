@@ -19,7 +19,6 @@ $(document).ready(function () {
 
     let dataChart = []
     let titlesChart = []
-    let colorChart = []
     let dataConsumo = []
     let titlesConsumo = []
     let dataBatt = []
@@ -27,6 +26,7 @@ $(document).ready(function () {
 
     let consumoOrario = []
     let produzioneOrario = []
+    let batteriaOrario = []
 
     _modeList.val(1)
     $("#divBase").hide()
@@ -87,9 +87,10 @@ $(document).ready(function () {
         })
         socket.on("valoreProduzione", data => {
             $("#ricavatoOdierno").text((parseFloat(data["produzione"]) / 1000 * 0.0792).toFixed(3) + " €")
-            
+
             consumoOrario = data["consumoOrario"]
             produzioneOrario = data["produzioneOrario"]
+            batteriaOrario = data["batteriaOrario"]
         })
     } catch (error) {
         console.log(error)
@@ -568,14 +569,20 @@ $(document).ready(function () {
     }
     // generatore grafico batteria giornaliera e annuale
     function ShowBatteriaCharts() {
+        let labels = []
+
+        batteriaOrario.forEach((element, index) => {
+            labels.push(`-${23 - index}h`)
+        })
+
         let chart = new Chart($("#batteriaGiornaliero"), {
             data: {
-                labels: [],
+                labels: labels,
                 datasets: [
                     {
                         label: "Batteria giornaliera",
                         type: 'line',
-                        data: dataChart,
+                        data: batteriaOrario,
                         borderColor: "rgba(0, 0, 255, 1)",
                     }
                 ]
@@ -612,12 +619,12 @@ $(document).ready(function () {
 
         chart = new Chart($("#batteriaAnnuale"), {
             data: {
-                labels: [],
+                labels: titlesBatt,
                 datasets: [
                     {
                         label: "Batteria annuale",
                         type: 'line',
-                        data: dataChart,
+                        data: dataBatt,
                         borderColor: "rgba(0, 0, 255, 1)",
                     }
                 ]

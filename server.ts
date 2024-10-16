@@ -21,14 +21,18 @@ const PORT: number = parseInt(process.env.PORT);
 let paginaErrore;
 
 let prod = 0;
-let produzioneGiornaliero = 0
-let dataOdierna = new Date()
 let consumo = 0
 let batteria = 0
+
 let consumoOrario = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
 let produzioneOrario = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+let batteriaOrario = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+
 let consumoGiornaliero = 0
-let batteriaGiornaliera = 0
+let produzioneGiornaliero = 0
+let batteriaGiornaliero = 0
+
+let dataOdierna = new Date()
 
 server.listen(PORT, () => {
     // init()
@@ -74,7 +78,7 @@ io.on("connection", socket => {
         console.log(`User inserito correttamente nella stanza user`);
         socket.emit("JOIN-RESULT", "OK");
 
-        io.to("user").emit("valoreProduzione", {produzioneGiornaliero: produzioneGiornaliero, consumoOrario: consumoOrario, produzioneOrario: produzioneOrario})
+        io.to("user").emit("valoreProduzione", {produzioneGiornaliero: produzioneGiornaliero, consumoOrario: consumoOrario, produzioneOrario: produzioneOrario, batteriaOrario: batteriaOrario})
     });
     
     socket.on("updateArduino", async args => {
@@ -167,6 +171,7 @@ io.on("connection", socket => {
         io.emit("sunshutter", JSON.stringify(data[0]))
         prod = data[0]["produzioneGiornaliero"]
         consumo = data[0]["Consumo"]
+        batteria = data[0]["Batteria"]
         data[0]["produzioneGiornaliera"] = produzioneGiornaliero
         io.to("user").emit("sunshutter", JSON.stringify(data[0]))
 
@@ -181,6 +186,7 @@ io.on("connection", socket => {
 setInterval(() => {
     produzioneGiornaliero += prod
     consumoGiornaliero += consumo
+    batteriaGiornaliero += batteria
 }, 60000);
 
 setInterval(async () => {
@@ -203,6 +209,15 @@ setInterval(async () => {
     aus[produzioneOrario.length - 1] = produzioneGiornaliero / 60
     produzioneOrario = aus
 
+    aus = batteriaOrario
+
+    for(let i = 0; i < batteriaOrario.length - 1; i++) { // aggiornamento del vettore della batteria delle ultime 24h
+        aus[i] = aus[i + 1]
+    }
+
+    aus[batteriaOrario.length - 1] = batteriaGiornaliero / 60
+    batteriaOrario = aus
+
     if(dataOdierna.getDay() != data.getDay()) {
         const client = new MongoClient(connectionString);
         await client.connect();
@@ -217,9 +232,14 @@ setInterval(async () => {
         coll = client.db(DBNAME).collection("valoriMediConsumo")
         request = await coll.updateOne({ _id: new ObjectId("6615748ab64fc170b01d320d")}, { $set: aus})
 
+        aus[Date.now()] = consumoGiornaliero / 24 / 60
+        coll = client.db(DBNAME).collection("valoriMediBatteria")
+        request = await coll.updateOne({ _id: new ObjectId("66157aa6b64fc170b01d321d")}, { $set: aus})
+
         dataOdierna = data
         produzioneGiornaliero = 0
         consumoGiornaliero = 0
+        batteriaGiornaliero = 0
 
         client.close()
     }
